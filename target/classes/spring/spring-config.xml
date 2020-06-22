@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--开启注解扫描-->
+    <context:component-scan base-package="com.aaa"/>
+
+    <!--引入外部的资源文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--引入外部spring配置文件-->
+    <import resource="spring-shiro.xml"/>
+
+    <!--
+      - 整合数据源的bean
+      - init-method属性是调用初始化方法
+      - destroy-method属性是调用销毁后的方法
+    -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+        <property name="driverClassName" value="${driver}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!--初始化数量-->
+        <property name="initialSize" value="8"/>
+        <!--最小的闲置数量-->
+        <property name="minIdle" value="3"/>
+        <!--最大的活动链接数量-->
+        <property name="maxActive" value="20"/>
+        <!--等待超时时间-->
+        <property name="maxWait" value="60000"/>
+    </bean>
+
+    <!--
+      - 配置SqlSessionFactoryBean
+      - 将Mybatis中的SqlSessionFactory交给Spring容器管理
+    -->
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--引用配置数据源-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--配置映射文件-->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+        <!--配置别名的基础包-->
+        <property name="typeAliasesPackage" value="com.aaa.entity" />
+        <!--对应mybatis种的setting配置-->
+        <!--<property name="configurationProperties" ></property>-->
+        <!--
+         - 单独制定mybatis的配置文件
+         - 在value属性中写上配置文件的路径就可以直接引用，就不需要上面的配置
+        -->
+        <!--  <property name="configLocation" value="mybatis配置文件路径"/>-->
+    </bean>
+
+    <!--dao/mapper接口扫描器:可以让Service自动依赖dao/mapper接口-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--注意：sqlSessionFactoryBeanName ，value="name"-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"/>
+        <!--dao/mapper接口所在的包-->
+        <property name="basePackage" value="com.aaa.dao"/>
+    </bean>
+
+    <!--1、配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--2、配置事务的注解驱动-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!--文件上传解析器  这个id必须是 multipartResolver -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!--默认的编码方式-->
+        <property name="defaultEncoding" value="utf-8"/>
+        <!--文件上传的大小 默认以字节为单位-->
+        <property name="maxInMemorySize" value="1024"/>
+    </bean>
+
+
+
+
+</beans>

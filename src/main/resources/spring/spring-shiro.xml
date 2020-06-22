@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--安全管理器-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!--注入缓存管理器-->
+        <!-- <property name="cacheManager" ref="cacheManager"/>-->
+
+        <!-- Single realm app.  If you have multiple realms, use the 'realms' property instead. -->
+        <!--session的管理方式-->
+        <property name="sessionMode" value="native"/>
+        <!---注入一个realm的实现类-->
+        <property name="realm" ref="UserRealm"/>
+    </bean>
+
+    <!--缓存管理器 暂时用不到-->
+<!--    <bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">-->
+<!--        &lt;!&ndash; Set a net.sf.ehcache.CacheManager instance here if you already have one.  If not, a new one-->
+<!--             will be creaed with a default config:-->
+<!--             <property name="cacheManager" ref="ehCacheManager"/> &ndash;&gt;-->
+<!--        &lt;!&ndash; If you don't have a pre-built net.sf.ehcache.CacheManager instance to inject, but you want-->
+<!--             a specific Ehcache configuration to be used, specify that here.  If you don't, a default-->
+<!--             will be used.:-->
+<!--        <property name="cacheManagerConfigFile" value="classpath:some/path/to/ehcache.xml"/> &ndash;&gt;-->
+<!--    </bean>-->
+
+
+    <!--用来配置自定义的realm类-->
+    <bean id="UserRealm" class="com.aaa.realm.UserRealm">
+<!--        <property name="name" value="jdbcRealm"/>-->
+        <!--密码匹配器-->
+        <property name="credentialsMatcher">
+            <!-- The 'bootstrapDataPopulator' Sha256 hashes the password
+                 (using the username as the salt) then base64 encodes it: -->
+            <bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+                <!--加密算法的名称-->
+                <property name="hashAlgorithmName" value="MD5"/>
+                <!-- true means hex encoded, false means base64 encoded -->
+                <property name="storedCredentialsHexEncoded" value="false"/>
+                <property name="hashIterations" value="1024"/>
+            </bean>
+        </property>
+    </bean>
+
+
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+    <!--启用Shiro的注解配置：识别注解-->
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor"/>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <!--这个id要和web.xml中的过滤器的名字保持一致-->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!--注入安全管理器-->
+        <property name="securityManager" ref="securityManager"/>
+        <!--指定默认的登陆界面-->
+        <property name="loginUrl" value="/login.jsp"/>
+        <!--认证成功后跳转的界面-->
+        <property name="successUrl" value="/index.jsp"/>
+        <!--未授权的跳转界面-->
+        <property name="unauthorizedUrl" value="/false.jsp"/>
+        <!--指定不同地址的过滤规则-->
+        <property name="filterChainDefinitions">
+            <value>
+                /favicon.ico = anon
+                /static/** = anon
+                /dept/** = anon
+                /user/** = anon
+                /*.jar = anon
+                /logout = logout
+                /** = authc
+            </value>
+        </property>
+    </bean>
+</beans>

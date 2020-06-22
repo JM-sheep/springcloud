@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aaa.dao.DeptDao">
+
+    <select id="listAll" resultType="com.aaa.entity.Dept">
+        select * from dept order by deptno
+    </select>
+    <select id="selectOne" resultType="com.aaa.entity.Dept">
+        select * from dept where deptno=#{deptno}
+    </select>
+    <update id="update">
+        update dept from dname=#{dname},loc=#{loc} where deptno=#{deptno}
+    </update>
+    <insert id="insert">
+        <selectKey keyProperty="deptno" order="BEFORE"  resultType="Integer" >
+            select seq_dept.nextval from dual
+        </selectKey>
+        insert into dept values (#{deptno},#{dname},#{loc})
+    </insert>
+    <delete id="delete">
+        delete from dept where deptno=#{deptno}
+    </delete>
+    <insert id="insertFile">
+        <selectKey keyProperty="fid" order="BEFORE"  resultType="Integer" >
+            select seq_files.nextval from dual
+        </selectKey>
+        insert into files values (#{fid},#{fname})
+    </insert>
+</mapper>
